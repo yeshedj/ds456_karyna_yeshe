@@ -8,7 +8,7 @@
 
 <meta name="author" content="Karyna Steele &amp; Yeshe Jangchup">
 
-<title>FP 4 - Intermediate Narrative</title>
+<title>FP 4: Intermediate Narrative</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -26,41 +26,6 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
-}
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -89,7 +54,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">FP 4 - Intermediate Narrative</h1>
+<h1 class="title">FP 4: Intermediate Narrative</h1>
 </div>
 
 
@@ -114,33 +79,182 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="description-motivation" class="level2">
 <h2 class="anchored" data-anchor-id="description-motivation">Description &amp; Motivation</h2>
-<p>Your group members, the area you are working in, and a brief description of it. If there’s more than one file, an overall guide to what is in each one.</p>
-<p>Describe and briefly motivate your research questions.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
+<section id="team-domain" class="level3">
+<h3 class="anchored" data-anchor-id="team-domain">Team &amp; Domain</h3>
+<ul>
+<li><strong>Group Members:</strong> Karyna Steele &amp; Yeshe Jangchup</li>
+<li><strong>Research Area:</strong> Automated Speech Recognition (ASR) performance and Language Modeling limitations on disordered/clinical speech patterns.</li>
+</ul>
+</section>
+<section id="description" class="level3">
+<h3 class="anchored" data-anchor-id="description">Description</h3>
+<p>Aphasia is a language disorder that affects a person’s ability to communicate, typically resulting from brain damage due to a stroke or traumatic brain injury (TBI). Symptoms of aphasia can manifest in various ways, such as difficulty with speech production, comprehension, reading, or writing. There is a wide range of severity levels that makes it a complex condition to study and treat.</p>
+</section>
+<section id="motivation" class="level3">
+<h3 class="anchored" data-anchor-id="motivation">Motivation</h3>
+<ul>
+<li>Large Language Models (LLMs) perform poorly for individuals with speech and language difficulties</li>
+<li>AI models are unable to accurately analyze impaired speech patterns due to being almost exclusively trained on neurotypical, fluent adults (Standard HAI 2026).</li>
+</ul>
+</section>
+<section id="research-question" class="level3">
+<h3 class="anchored" data-anchor-id="research-question">Research Question</h3>
+<blockquote class="blockquote">
+<p><strong>RQ:</strong> How do current AI models perform when processing aphasic speech across symptom severity levels, where and why do they fail?</p>
+</blockquote>
+</section>
 <section id="ethical-issues" class="level3">
-<h3 class="anchored" data-anchor-id="ethical-issues">Ethical issues</h3>
+<h3 class="anchored" data-anchor-id="ethical-issues">Ethical Issues</h3>
+<ul>
+<li><strong>Data privacy?:</strong> All the audio samples and human transcriptions are being used from the restricted-access research database AphasiaBank. This makes sure that institutional agreements and policies in regards to data sharing and participant anonymity is preserved.</li>
+<li><strong>Who may benefit?:</strong> When speech recognition models are trained and evaluated only on healthy, fluent speech, individuals with speech impairments are unable to access assistive tools that could significantly improve their quality of life. Building models that can accurately process disordered speech is important for making sure individuals with speech difficulties are not excluded from the benefits of modern technology.Training speech recognition models on aphasic speech samples can improve inclusivity and accessibility within AI system development.</li>
+</ul>
+</section>
+<section id="file-guide" class="level3">
+<h3 class="anchored" data-anchor-id="file-guide">File Guide</h3>
+<ul>
+<li><code>FP4.qmd</code>: The intermediate narrative file which documents our workflow, progress, and plan for the project</li>
+<li><code>/audio-data/</code>: Directory containing all trimmed audio chunks and text transcript pairings from AphasiaBank</li>
+<li><code>/Control_1_CT/</code>: Baycrest control group of healthy participants doing the Cinderella Task</li>
+<li><code>/Control_2_CT/</code>: Previously aphasic but currently non-aphasic control group of healthy participants doing the Cinderella Task</li>
+<li><code>/Control_2_CT/</code>: Previously aphasic but currently non-aphasic control group of healthy participants doing the Cinderella Task (Karyna’s 5 trimmed audio files)</li>
+</ul>
+<hr>
 </section>
 </section>
 <section id="dataset-description" class="level2">
 <h2 class="anchored" data-anchor-id="dataset-description">Dataset Description</h2>
-<p>You should have a description of the datasets you use. At this point, this can be just a few example records and descriptions of their purpose. For each result (visualization, table, or data point), you should have a sentence or two describing the result.</p>
+<p>(You should have a description of the datasets you use. At this point, this can be just a few example records and descriptions of their purpose. For each result (visualization, table, or data point), you should have a sentence or two describing the result.)</p>
+<p>Our project uses audio recordings and transcripts from the <strong>AphasiaBank dataset</strong>, specifically selecting samples of the <strong>Cinderella Storytelling Task</strong>. Below are example representations of the data structure:</p>
+<section id="example-record-control-participant" class="level3">
+<h3 class="anchored" data-anchor-id="example-record-control-participant">Example Record: Control Participant</h3>
+<ul>
+<li><strong>Audio File:</strong> <code>control_01_CinderellaTask.mp3</code> (Trimmed to the Cinderella Storytelling task segment).</li>
+<li><strong>Human/AphasiaBank Transcript:</strong> “Once upon a time there was a young girl named Cinderella…”</li>
+<li><strong>Purpose:</strong> Represents a more clean baseline of non-aphasic speech from healthy participants which captures a more natural flow, pacing, and standard syntax</li>
+</ul>
+</section>
+<section id="example-record-aphasic-participant" class="level3">
+<h3 class="anchored" data-anchor-id="example-record-aphasic-participant">Example Record: Aphasic Participant</h3>
+<ul>
+<li><strong>Audio File:</strong> <code>aphasic_03_CinderellaTask.mp3</code> (Trimmed to the same task boundaries)</li>
+<li><strong>Human/AphasiaBank Transcript:</strong> “&amp;-um the girl… and stepmother… [//] bad… shoes…&amp;=throat:clears.”</li>
+<li><strong>Purpose:</strong> Represents a clinical aphasic speech sample with atypical speech patterns like fragmented grammar, word-finding pauses, etc.</li>
+</ul>
+<hr>
+</section>
 </section>
 <section id="analyses-with-a-short-description-of-results" class="level2">
 <h2 class="anchored" data-anchor-id="analyses-with-a-short-description-of-results">Analyses with a short description of results</h2>
-<p>Include any work that you have completed up to that point. I should be able to download the datasets you share and run your single markdown file to reproduce it. Include any datasets, analysis, visualizations, etc. you have should be included in the file.</p>
+<p>(Include any work that you have completed up to that point. I should be able to download the datasets you share and run your single markdown file to reproduce it. Include any datasets, analysis, visualizations, etc. you have should be included in the file.)</p>
+<section id="completed-steps" class="level3">
+<h3 class="anchored" data-anchor-id="completed-steps">COMPLETED STEPS</h3>
+<section id="step-1-baseline-prep" class="level4">
+<h4 class="anchored" data-anchor-id="step-1-baseline-prep">Step 1: Baseline &amp; Prep</h4>
+<ul>
+<li>Isolated the “Cinderella Task” to keep the context consistent across all samples</li>
+<li>Selected a control group of healthy speakers from the database to map standard speech performance which will serve as a comparison baseline against aphasic speech samples</li>
+<li>Trimmed audio files to only include the ‘Cinderella Task’ on this control set (via GarageBand)</li>
+<li>Cleaned transcripts to only include sound utterances, removing any documented physical gestures</li>
+</ul>
+</section>
+<section id="step-2-running-model-on-control-set" class="level4">
+<h4 class="anchored" data-anchor-id="step-2-running-model-on-control-set">Step 2: Running Model on Control set</h4>
+<ul>
+<li>Selected OpenAI’s <strong>WhisperAI</strong> as our transcription model for analyzing speech</li>
+<li>Ran WhisperAI on the healthy control audio files to generate machine-made transcripts</li>
+</ul>
+</section>
+</section>
+<section id="next-steps" class="level3">
+<h3 class="anchored" data-anchor-id="next-steps">NEXT STEPS</h3>
+<section id="step-3-creating-rulebook" class="level4">
+<h4 class="anchored" data-anchor-id="step-3-creating-rulebook">Step 3: Creating Rulebook</h4>
+<ul>
+<li>Define criteria for what constitutes a “good” or “acceptable” transcript</li>
+<li><strong>WhisperAI control vs.&nbsp;Human control</strong>: Then using these rules, evaluate WhisperAI’s performance against the human-made transcripts to establish its baseline performance on non-aphasic/healthy speech</li>
+</ul>
+</section>
+<section id="step-4-initial-comparison" class="level4">
+<h4 class="anchored" data-anchor-id="step-4-initial-comparison">Step 4: Initial Comparison</h4>
+<ul>
+<li>Evaluate the transcripts generated by WhisperAI against the human-made transcripts using the rules created in Step 3</li>
+<li>Document any errors or patterns observed in WhisperAI’s performance on this initial control group doing the ‘Cinderella Task’</li>
+<li>Create a summary of the results</li>
+</ul>
+</section>
+<section id="step-5-iterative-run-on-aphasic-samples" class="level4">
+<h4 class="anchored" data-anchor-id="step-5-iterative-run-on-aphasic-samples">Step 5: Iterative Run on Aphasic Samples</h4>
+<ul>
+<li>Select non-healthy/aphasic speech samples doing the ‘Cinderella Task’ across varying severity levels in the AphasiaBank dataset to analyze</li>
+<li>Create a trimmed audio set OR automate by writing a script</li>
+<li>Feed this into WhisperAI to generate transcripts for the ‘Cinderaella Task’ aphasic speech samples</li>
+</ul>
+</section>
+<section id="step-6-evaluation-across-groupstranscription-methods" class="level4">
+<h4 class="anchored" data-anchor-id="step-6-evaluation-across-groupstranscription-methods">Step 6: Evaluation Across Groups/Transcription Methods</h4>
+<ul>
+<li>Evaluate the performance of the various generated transcripts using the rubric created in Step 3
+<ul>
+<li><strong>Human vs.&nbsp;WhisperAI:</strong>
+<ul>
+<li>Aphasic Human-made Transcript vs.&nbsp;Aphasic WhisperAI Transcript: to test the model’s accuracy on impaired/disordered speech</li>
+<li>Control Human-made Transcript vs.&nbsp;Control WhisperAI Transcript: to test the model’s baseline accuracy on standard speech patterns/usage</li>
+</ul></li>
+<li><strong>Group vs.&nbsp;Group:</strong>
+<ul>
+<li>Aphasic WhisperAI Transcript vs.&nbsp;Control WhisperAI Transcript: isolates errors to see if WhisperAI makes more or different types of errors (i.e., dropped word, hallucinations, misinterpretations, etc.) when processing the aphasic speech sample compared to the control speech group</li>
+<li>Aphasic Human Transcript vs.&nbsp;Control Human Transcript: to grasp a baseline of the clinical differences in the speech samples before any involvement with the models</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section id="step-7-overall-evaluation-visualization" class="level4">
+<h4 class="anchored" data-anchor-id="step-7-overall-evaluation-visualization">Step 7: Overall Evaluation &amp; Visualization</h4>
+<ul>
+<li>Evaluate performance differences between WhisperAI and Human transcriptions, and also between the control and aphasic sample groups using the rulebook criteria from Step 3</li>
+<li>Create visualizations to illustrate patterns/differences in performance across the various groups and transcription methods</li>
+</ul>
+<hr>
+</section>
+</section>
 </section>
 <section id="project-plan" class="level2">
 <h2 class="anchored" data-anchor-id="project-plan">Project Plan</h2>
-<p>Include a link to your plan for the remainder of the semester. Create an outline of the steps required to complete your project. For each step: Make sure it is clear and concrete. You should know when it is finished! Provide a date it was or completed or will be completed. Provide the name of the person / people who will complete that step. Note any steps that may be unclear or extra tricky.</p>
+<p><strong>TIMELINE:</strong> * <strong>Target Date:</strong> 11/6 * <em>Finish Step 2 and FP 4</em> * <em>Assigned To:</em> Karyna &amp; Yeshe</p>
+<ul>
+<li><strong>Date:</strong> 11/6 - 11/13
+<ul>
+<li><em>Step 3</em></li>
+<li><em>Assigned To:</em> Karyna &amp; Yeshe</li>
+<li><em>Potential tricky part:</em> Writing a consistent and reliable scoring system for phonetically scrambled words</li>
+</ul></li>
+<li><strong>Date:</strong> 11/13 - 11/18
+<ul>
+<li><em>Step 4 &amp; 5</em></li>
+<li><em>Assigned To:</em> Karyna &amp; Yeshe</li>
+<li><em>Potential tricky part:</em> Writing a batch automation files through the Whisper engine without manually trimming</li>
+</ul></li>
+<li><strong>Date:</strong> 11/18 - 11/30
+<ul>
+<li><em>Step 6</em></li>
+<li><em>Assigned To:</em> Karyna &amp; Yeshe</li>
+</ul></li>
+<li><strong>Date:</strong> 11/30 - end of semester
+<ul>
+<li><em>Step 7 and wrapping up</em></li>
+<li><em>Assigned To:</em> Karyna &amp; Yeshe</li>
+</ul></li>
+</ul>
 </section>
 <section id="contribution-summary" class="level2">
 <h2 class="anchored" data-anchor-id="contribution-summary">Contribution Summary</h2>
-<p>Summarize each group member’s specific contributions to this checkpoint assignment.</p>
+<p><strong>Karyna Steele:</strong> - trimmed 5 audio files for currently non-aphasic but previously-aphasic control set - created a script to clean human-made transcript annotations - drafted script to run WhisperAI on control group set</p>
+<p><strong>Yeshe Jangchup:</strong> - trimmed 5 audio files for currently non-aphasic control set - created FP4 Intermediate Narrative presentation - created FP4.qmd file and drafted the motivation/project plan</p>
 </section>
 <section id="ai-usage-statement" class="level2">
 <h2 class="anchored" data-anchor-id="ai-usage-statement">AI usage statement</h2>
+<p>Generative AI (Gemini) was used during this checkpoint to install Quarto onto VS Code to create a .qmd file for rendering of the intermediate narrative document.</p>
 </section>
 
 </main>

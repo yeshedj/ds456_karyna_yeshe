@@ -10,7 +10,7 @@ engine: knitr
 
 ### Team & Domain
 * **Group Members:** Karyna Steele & Yeshe Jangchup
-* **Research Area:** Automated Speech Recognition (ASR) performance and Language Modeling limitations on disordered/clinical speech patterns.
+* **Research Area:** Psych/cognition
 
 ### Description
 Aphasia is a language disorder that affects a person's ability to communicate, typically resulting from brain damage due to a stroke or traumatic brain injury (TBI). Symptoms of aphasia can manifest in various ways, such as difficulty with speech production, comprehension, reading, or writing. There is a wide range of severity levels that makes it a complex condition to study and treat.
@@ -140,15 +140,16 @@ I should be able to download the datasets you share and run your single markdown
 
 
 ## Contribution Summary 
-* **Karyna Steele:** 
+**Karyna Steele:** 
 - trimmed 5 audio files for currently non-aphasic but previously-aphasic control set
 - created a script to clean human-made transcript annotations
 - drafted script to run WhisperAI on control group set
 
-* **Yeshe Jangchup:** 
+**Yeshe Jangchup:** 
 - trimmed 5 audio files for currently non-aphasic control set
 - created FP4 Intermediate Narrative presentation
 - created FP4.qmd file and drafted the motivation/project plan
 
 
 ## AI usage statement
+Generative AI (Gemini) was used during this checkpoint to install Quarto onto VS Code to create a .qmd file for rendering of the intermediate narrative document. 

@@ -70,8 +70,16 @@ def load_text(path: Path) -> str:
         except ImportError:
             sys.exit("PDF input needs pdfplumber:  pip install pdfplumber")
         with pdfplumber.open(path) as pdf:
-            return "\n".join(page.extract_text() or "" for page in pdf.pages)
+            text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+        # drop stray page-number lines ("3", "Page 3", "3 of 12") from the export
+        text = re.sub(r"(?im)^\s*(?:page\s+)?\d+(?:\s*(?:of|/)\s*\d+)?\s*$", "", text)
+        return text
     return path.read_text(encoding="utf-8", errors="replace")
+
+
+def base_name(path: Path) -> str:
+    """kansas03-transcript.pdf -> kansas03  (so files pair up across scripts)."""
+    return re.sub(r"[-_ ]?transcripts?$", "", path.stem, flags=re.IGNORECASE)
 
 
 def merge_lines(text: str):
@@ -259,7 +267,7 @@ def main():
                       one_per_line=args.one_per_line)
         outdir = Path(args.outdir) if args.outdir else f.parent
         outdir.mkdir(parents=True, exist_ok=True)
-        dest = outdir / f"{f.stem}_cinderella.txt"
+        dest = outdir / f"{base_name(f)}_cinderella.txt"
         dest.write_text(out + "\n", encoding="utf-8")
         status = f"{len(out.split())} words" if out else "NO MATCHING SPEECH FOUND"
         print(f"{f.name} -> {dest}  ({status})")

@@ -3,8 +3,9 @@
 run_whisper.py
 
 Transcribe ONLY the Cinderella portion of each recording with OpenAI Whisper,
-using the timestamps in the matching CHAT (.cha) file to find where it is.
-Output: <cha_stem>_whisper.txt, ready for evaluate_wer.py.
+using the timestamps in the matching CHAT transcript (.cha, .txt or .pdf) to
+find where it is. Output: <name>_whisper.txt, ready for evaluate_wer.py.
+("kansas03-transcript.pdf" -> name "kansas03"; matches audio "kansas03a.mp4")
 
 Must sit in the same folder as chat_to_whisper.py (it reuses its parser).
 
@@ -30,10 +31,10 @@ import re
 import sys
 from pathlib import Path
 
-from transcription_script import DEFAULT_GEMS, load_text, parse_chat
+from transcription_script import DEFAULT_GEMS, base_name, load_text, parse_chat
 
 MEDIA_EXTS = {".mp4", ".mp3", ".wav", ".m4a", ".mov", ".mkv", ".flac", ".aac", ".ogg"}
-TS = re.compile(r"\x15?(\d+)_(\d+)\x15?\s*$")
+TS = re.compile(r"\x15?(\d+)_(\d+)\x15?")
 PAD_MS = 250  # small padding either side of the clip
 
 
@@ -44,9 +45,9 @@ def participant_times(cha_path: Path, gems, speaker="PAR"):
     for u in parse_chat(load_text(cha_path)):
         if u["speaker"] != speaker or (u["gem"] or "").lower() not in wanted:
             continue
-        m = TS.search(u["text"])
-        if m:
-            times.append((int(m.group(1)), int(m.group(2))))
+        found = TS.findall(u["text"])      # use the last "start_end" on the line
+        if found:
+            times.append((int(found[-1][0]), int(found[-1][1])))
     return times
 
 
@@ -82,7 +83,9 @@ def main():
         sys.exit("Install Whisper first:  pip install openai-whisper")
 
     cha_in = Path(args.cha)
-    cha_files = sorted(cha_in.glob("*.cha")) if cha_in.is_dir() else [cha_in]
+    transcript_exts = {".cha", ".pdf", ".txt"}
+    cha_files = (sorted(p for p in cha_in.iterdir() if p.suffix.lower() in transcript_exts)
+                 if cha_in.is_dir() else [cha_in])
     media_dir, outdir = Path(args.media), Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
@@ -101,7 +104,8 @@ def main():
         return result["text"].strip()
 
     for cha in cha_files:
-        media = find_media(cha.stem, media_dir)
+        name = base_name(cha)
+        media = find_media(name, media_dir)
         if media is None:
             print(f"{cha.name}: no matching audio/video in {media_dir}, skipped")
             continue
@@ -112,17 +116,36 @@ def main():
 
         print(f"{cha.name}: transcribing {media.name} ...")
         audio = whisper.load_audio(str(media))
+        audio_len = len(audio) / SAMPLE_RATE
+        start_s = min(s for s, _ in times) / 1000
+        end_s = max(e for _, e in times) / 1000
+        print(f"  audio length: {audio_len:.0f}s | Cinderella window from "
+              f"transcript: {start_s:.0f}s to {end_s:.0f}s "
+              f"({len(times)} participant utterances)")
+        if start_s >= audio_len:
+            print("  WARNING: the transcript's Cinderella timestamps start AFTER "
+                  "the end of this audio file. The audio may be trimmed or a "
+                  "different file than the transcript was made from. Skipped.")
+            continue
+        if end_s > audio_len:
+            print("  WARNING: window runs past the end of the audio; "
+                  "using what is available.")
 
         if args.per_utterance:
             text = " ".join(t for t in (transcribe(clip(audio, s, e))
                                         for s, e in times) if t)
         else:
-            text = transcribe(clip(audio, min(s for s, _ in times),
-                                   max(e for _, e in times)))
+            text = transcribe(clip(audio, start_s * 1000, end_s * 1000))
 
-        dest = outdir / f"{cha.stem}_whisper.txt"
+        if not text:
+            print("  WARNING: Whisper returned no text for this window "
+                  "(silence, or timestamps don't match the audio). Not saved.")
+            continue
+
+        dest = outdir / f"{name}_whisper.txt"
         dest.write_text(text + "\n", encoding="utf-8")
         print(f"  -> {dest} ({len(text.split())} words)")
+        print(f"  preview: {text[:120]}...")
 
 
 if __name__ == "__main__":

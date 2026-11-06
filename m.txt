@@ -1,0 +1,6 @@
+python transcription_script.py "audio-data/Control_1_CT" -o cleaned_1 
+python run_whisper.py --cha "audio-data/Control_1_CT" --media "audio-data/Control_1_CT" -o whisper_out_1 
+python wer.py --ref cleaned_1 --hyp whisper_out_1 --csv results_1.csv
+
+python wer.py --ref cleaned --hyp whisper_out --csv results.csv --errors-csv errors.csv
+python wer.py --ref cleaned_1 --hyp whisper_out_1 --csv results_1.csv --errors-csv errors_1.csv

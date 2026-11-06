@@ -1,5 +1,6 @@
 ---
-title: "FP 4 - Intermediate Narrative"
+title: "FP 4: Intermediate Narrative"
+author: Karyna Steele & Yeshe Jangchup
 format: html
 engine: knitr
 ---
@@ -7,40 +8,147 @@ engine: knitr
 
 ## Description & Motivation 
 
-Your group members, the area you are working in, and a brief description of it.
-If there's more than one file, an overall guide to what is in each one.
+### Team & Domain
+* **Group Members:** Karyna Steele & Yeshe Jangchup
+* **Research Area:** Automated Speech Recognition (ASR) performance and Language Modeling limitations on disordered/clinical speech patterns.
 
-Describe and briefly motivate your research questions.
+### Description
+Aphasia is a language disorder that affects a person's ability to communicate, typically resulting from brain damage due to a stroke or traumatic brain injury (TBI). Symptoms of aphasia can manifest in various ways, such as difficulty with speech production, comprehension, reading, or writing. There is a wide range of severity levels that makes it a complex condition to study and treat.
 
-```{r}
-library(ggplot2)
+### Motivation
+- Large Language Models (LLMs) perform poorly for individuals with speech and language difficulties 
+- AI models are unable to accurately analyze impaired speech patterns due to being almost exclusively trained on neurotypical, fluent adults (Standard HAI 2026).
 
-```
 
-### Ethical issues
+### Research Question
+> **RQ:** How do current AI models perform when processing aphasic speech across symptom severity levels, where and why do they fail?
 
+
+### Ethical Issues
+* **Data privacy?:** All the audio samples and human transcriptions are being used from the restricted-access research database AphasiaBank. This makes sure that institutional agreements and policies in regards to data sharing and participant anonymity is preserved.
+* **Who may benefit?:** When speech recognition models are trained and evaluated only on healthy, fluent speech, individuals with speech impairments are unable to access assistive tools that could significantly improve their quality of life. Building models that can accurately process disordered speech is important for making sure individuals with speech difficulties are not excluded from the benefits of modern technology.Training speech recognition models on aphasic speech samples can improve inclusivity and accessibility within AI system development.
+
+
+
+### File Guide
+* `FP4.qmd`: The intermediate narrative file which documents our workflow, progress, and plan for the project
+* `/audio-data/`: Directory containing all trimmed audio chunks and text transcript pairings from AphasiaBank
+* `/Control_1_CT/`: Baycrest control group of healthy participants doing the Cinderella Task 
+* `/Control_2_CT/`: Previously aphasic but currently non-aphasic control group of healthy participants doing the Cinderella Task 
+* `/Control_2_CT/`: Previously aphasic but currently non-aphasic control group of healthy participants doing the Cinderella Task (Karyna's 5 trimmed audio files)
+
+
+
+
+---
 
 ## Dataset Description
-You should have a description of the datasets you use. At this point, this can be just a few example records and descriptions of their purpose.
-For each result (visualization, table, or data point), you should have a sentence or two describing the result.
+(You should have a description of the datasets you use. At this point, this can be just a few example records and descriptions of their purpose.
+For each result (visualization, table, or data point), you should have a sentence or two describing the result.)
+
+Our project uses audio recordings and transcripts from the **AphasiaBank dataset**, specifically selecting samples of the **Cinderella Storytelling Task**. Below are example representations of the data structure:
+
+
+### Example Record: Control Participant
+* **Audio File:** `control_01_CinderellaTask.mp3` (Trimmed to the Cinderella Storytelling task segment).
+* **Human/AphasiaBank Transcript:** "Once upon a time there was a young girl named Cinderella..."
+* **Purpose:** Represents a more clean baseline of non-aphasic speech from healthy participants which captures a more natural flow, pacing, and standard syntax
+
+### Example Record: Aphasic Participant
+* **Audio File:** `aphasic_03_CinderellaTask.mp3` (Trimmed to the same task boundaries)
+* **Human/AphasiaBank Transcript:** "&-um the girl... and stepmother... [//] bad... shoes...&=throat:clears."
+* **Purpose:** Represents a clinical aphasic speech sample with atypical speech patterns like fragmented grammar, word-finding pauses, etc.
+
+---
 
 ## Analyses with a short description of results
-Include any work that you have completed up to that point. 
-I should be able to download the datasets you share and run your single markdown file to reproduce it. Include any datasets, analysis, visualizations, etc. you have should be included in the file.
+(Include any work that you have completed up to that point. 
+I should be able to download the datasets you share and run your single markdown file to reproduce it. Include any datasets, analysis, visualizations, etc. you have should be included in the file.)
 
 
+### COMPLETED STEPS
+#### Step 1: Baseline & Prep
+- Isolated the "Cinderella Task" to keep the context consistent across all samples
+- Selected a control group of healthy speakers from the database to map standard speech performance which will serve as a comparison baseline against aphasic speech samples
+- Trimmed audio files to only include the 'Cinderella Task' on this control set (via GarageBand)
+- Cleaned transcripts to only include sound utterances, removing any documented physical gestures
+
+#### Step 2: Running Model on Control set
+- Selected OpenAI's **WhisperAI** as our transcription model for analyzing speech
+- Ran WhisperAI on the healthy control audio files to generate machine-made transcripts
+
+
+### NEXT STEPS
+#### Step 3: Creating Rulebook 
+- Define criteria for what constitutes a "good" or "acceptable" transcript
+- **WhisperAI control vs. Human control**: Then using these rules, evaluate WhisperAI's performance against the human-made transcripts to establish its baseline performance on non-aphasic/healthy speech
+
+
+#### Step 4: Initial Comparison
+- Evaluate the transcripts generated by WhisperAI against the human-made transcripts using the rules created in Step 3
+- Document any errors or patterns observed in WhisperAI's performance on this initial control group doing the 'Cinderella Task'
+- Create a summary of the results 
+
+
+#### Step 5: Iterative Run on Aphasic Samples
+- Select non-healthy/aphasic speech samples doing the 'Cinderella Task' across varying severity levels in the AphasiaBank dataset to analyze
+- Create a trimmed audio set OR automate by writing a script
+- Feed this into WhisperAI to generate transcripts for the 'Cinderaella Task' aphasic speech samples
+
+
+#### Step 6: Evaluation Across Groups/Transcription Methods
+- Evaluate the performance of the various generated transcripts using the rubric created in Step 3
+    - **Human vs. WhisperAI:**
+        - Aphasic Human-made Transcript vs. Aphasic WhisperAI Transcript: to test the model's accuracy on impaired/disordered speech
+        - Control Human-made Transcript vs. Control WhisperAI Transcript: to test the model's baseline accuracy on standard speech patterns/usage
+
+    - **Group vs. Group:**
+        - Aphasic WhisperAI Transcript vs. Control WhisperAI Transcript: isolates errors to see if WhisperAI makes more or different types of errors (i.e., dropped word, hallucinations, misinterpretations, etc.) when processing the aphasic speech sample compared to the control speech group
+        - Aphasic Human Transcript vs. Control Human Transcript: to grasp a baseline of the clinical differences in the speech samples before any involvement with the models
+
+
+#### Step 7: Overall Evaluation & Visualization
+- Evaluate performance differences between WhisperAI and Human transcriptions, and also between the control and aphasic sample groups using the rulebook criteria from Step 3
+- Create visualizations to illustrate patterns/differences in performance across the various groups and transcription methods
+
+---
 
 ## Project Plan
-Include a link to your plan for the remainder of the semester. Create an outline of the steps required to complete your project. 
-For each step:
-Make sure it is clear and concrete. You should know when it is finished!
-Provide a date it was or completed or will be completed.
-Provide the name of the person / people who will complete that step.
-Note any steps that may be unclear or extra tricky.
+
+**TIMELINE:**
+* **Target Date:** 11/6
+    * *Finish Step 2 and FP 4*
+    * *Assigned To:* Karyna & Yeshe
+
+* **Date:** 11/6 - 11/13
+    * *Step 3*
+    * *Assigned To:* Karyna & Yeshe
+    * *Potential tricky part:* Writing a consistent and reliable scoring system for phonetically scrambled words
+
+* **Date:** 11/13 - 11/18
+    * *Step 4 & 5*
+    * *Assigned To:* Karyna & Yeshe
+    * *Potential tricky part:* Writing a batch automation files through the Whisper engine without manually trimming
+
+* **Date:** 11/18 - 11/30
+    * *Step 6*
+    * *Assigned To:* Karyna & Yeshe
+
+* **Date:** 11/30 - end of semester
+    * *Step 7 and wrapping up*
+    * *Assigned To:* Karyna & Yeshe
 
 
 ## Contribution Summary 
-Summarize each group member’s specific contributions to this checkpoint assignment.
+* **Karyna Steele:** 
+- trimmed 5 audio files for currently non-aphasic but previously-aphasic control set
+- created a script to clean human-made transcript annotations
+- drafted script to run WhisperAI on control group set
+
+* **Yeshe Jangchup:** 
+- trimmed 5 audio files for currently non-aphasic control set
+- created FP4 Intermediate Narrative presentation
+- created FP4.qmd file and drafted the motivation/project plan
 
 
 ## AI usage statement

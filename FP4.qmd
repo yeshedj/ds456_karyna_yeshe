@@ -65,6 +65,64 @@ Our project uses audio recordings and transcripts from the **AphasiaBank dataset
 (Include any work that you have completed up to that point. 
 I should be able to download the datasets you share and run your single markdown file to reproduce it. Include any datasets, analysis, visualizations, etc. you have should be included in the file.)
 
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(readr)
+
+df <- bind_rows(
+  read_csv("results.csv", show_col_types = FALSE) %>% mutate(group = "Group 1"),
+  read_csv("results_1.csv", show_col_types = FALSE) %>% mutate(group = "Group 2")
+)
+```
+
+```{r}
+summary <- df %>%
+  group_by(group) %>%
+  summarise(
+    ref_words = sum(ref_words),
+    errors = sum(substitutions + deletions + insertions),
+    pooled_wer = errors / ref_words
+  )
+
+write_csv(df, "results_combined.csv")
+```
+
+```{r}
+# Prepare data for the plot
+plot_data <- df %>%
+  mutate(file = factor(file, levels = file[order(wer)])) %>%
+  pivot_longer(
+    cols = c(substitutions, deletions, insertions),
+    names_to = "error_type",
+    values_to = "errors"
+  ) %>%
+  mutate(rate = errors / ref_words)
+
+# Plot WER by recording
+ggplot(plot_data, aes(x = rate, y = file, fill = error_type)) +
+  geom_col() +
+  facet_grid(group ~ ., scales = "free_y", space = "free_y") +
+  scale_x_continuous(labels = scales::percent) +
+  scale_fill_manual(values = c(
+    substitutions = "#E69F00",
+    deletions = "#56B4E9",
+    insertions = "#CC79A7"
+  )) +
+  labs(
+    title = "Whisper Word Error Rate by Recording",
+    x = "Errors as % of reference words",
+    y = "Recording",
+    fill = "Error Type"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+ggsave("wer_by_file_groups.png", width = 9, height = 7, dpi = 300)
+```
+
+- Errors are fairly consistent across both groups, which means that we can most likely use the not aphasic group with the controls. We also see that the most common type of error is a substitution, which is likely caused by the fact that the word 'stepsister' is frequently said, and it is changed to 'step sister.' The second most common error are deletions. We think that is because the human made transcripts include stutters, while whisper deletes words that are said more than once in a row. It seems like Whisper is forcing the speech to be a bit more 'coherent.'
 
 ### COMPLETED STEPS
 #### Step 1: Baseline & Prep

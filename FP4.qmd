@@ -1,0 +1,46 @@
+---
+title: "FP 4 - Intermediate Narrative"
+format: html
+engine: knitr
+---
+
+
+## Description & Motivation 
+
+Your group members, the area you are working in, and a brief description of it.
+If there's more than one file, an overall guide to what is in each one.
+
+Describe and briefly motivate your research questions.
+
+```{r}
+library(ggplot2)
+
+```
+
+### Ethical issues
+
+
+## Dataset Description
+You should have a description of the datasets you use. At this point, this can be just a few example records and descriptions of their purpose.
+For each result (visualization, table, or data point), you should have a sentence or two describing the result.
+
+## Analyses with a short description of results
+Include any work that you have completed up to that point. 
+I should be able to download the datasets you share and run your single markdown file to reproduce it. Include any datasets, analysis, visualizations, etc. you have should be included in the file.
+
+
+
+## Project Plan
+Include a link to your plan for the remainder of the semester. Create an outline of the steps required to complete your project. 
+For each step:
+Make sure it is clear and concrete. You should know when it is finished!
+Provide a date it was or completed or will be completed.
+Provide the name of the person / people who will complete that step.
+Note any steps that may be unclear or extra tricky.
+
+
+## Contribution Summary 
+Summarize each group member’s specific contributions to this checkpoint assignment.
+
+
+## AI usage statement

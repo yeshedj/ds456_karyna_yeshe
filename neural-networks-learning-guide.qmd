@@ -1,7 +1,7 @@
 ---
 title: "Neural Networks"
 subtitle: "Intro to MLPs (Multilayer Perceptrons)"
-author: "[Your team's names here]"
+author: "[Your name here]"
 format:
   html:
     toc: true
@@ -19,15 +19,50 @@ execute:
   message: false
 ---
 
-## What you will learn
+::: {.callout-tip title="Major Tip"}
+Note: It is highly recommended to either...
 
-Neural networks power image recognition, speech transcription, and large language models, but the core idea is surprisingly small. A neural net is a sequence of simple functions that are trained by repeatedly nudging their numbers in whichever direction that makes the error shrink. This activity will help you understand that idea, and apply it to image classification. By the end of this guide you will hopefully be able to:
+1.  Render this activity first to read/follow the instructions, but run the code on the qmd. To the right of the Render button, click the settings gear and select 'Preview in Viewer Pane' for the most ideal set up.
+2.  Or, complete the activity in Visual mode.
+:::
 
-1.  **Describe** what a dense NN or MLP computes: layers, weights, and activation functions.
-2.  **Explain** how training works (loss function, gradient descent, backpropagation) and verify a gradient by hand.
+## Learning Objectives
+
+Neural networks power image recognition, speech transcription, and large language models, but the core idea is surprisingly small. A neural net is a sequence of simple functions that are trained by repeatedly nudging their numbers in whichever direction that makes the loss or "error" shrink. This activity will help you understand that idea, and apply it to image classification. By the end of this guide you will hopefully be able to:
+
+1.  **Describe** what a dense Neural Network or Multilayer Perception (MLP) computes: layers, weights, and activation functions.
+2.  **Explain** how training works. *i.e. loss ("error") function, gradient descent, backpropagation.*
 3.  **Train** a logistic regression and an MLP on an image dataset in R using the `torch` package, and compare them.
 4.  **Use** a train / validation / test split to tune a model.
-5.  **Navigate** the bigger landscape: what other kinds of networks exist and which R tools you would use next.
+5.  Learn what other kinds of networks exist and which R tools you could use next.
+
+## Cheatsheet
+
++----------------------------------------------+----------------------------------------------------------------------------+
+| Concept                                      | Definition                                                                 |
++==============================================+============================================================================+
+| Layer                                        | linear map + bias, then a non-linear activation                            |
++----------------------------------------------+----------------------------------------------------------------------------+
+| Activation                                   | the thing that makes depth useful (ReLU is the usual hidden-layer default) |
++----------------------------------------------+----------------------------------------------------------------------------+
+| Softmax + cross-entropy                      | turn scores into probabilities; punish low probability on the true class   |
++----------------------------------------------+----------------------------------------------------------------------------+
+| Gradient descent                             | $\mathbf{W} \leftarrow \mathbf{W} - \eta\,\partial J/\partial \mathbf{W}$  |
++----------------------------------------------+----------------------------------------------------------------------------+
+| SGD / mini-batch                             | estimate the gradient on a small random batch                              |
++----------------------------------------------+----------------------------------------------------------------------------+
+| Backprop (`$backward()`)                     | chain rule, output → input, reusing work                                   |
++----------------------------------------------+----------------------------------------------------------------------------+
+| Epoch                                        | one full pass over the training data                                       |
++----------------------------------------------+----------------------------------------------------------------------------+
+| Overfitting                                  | train performance keeps improving, validation performance does not         |
++----------------------------------------------+----------------------------------------------------------------------------+
+| Early stopping, L2 (`weight_decay`), dropout | three ways to rein in overfitting                                          |
++----------------------------------------------+----------------------------------------------------------------------------+
+| Train / validation / test                    | fit weights / choose settings / report the final number once               |
++----------------------------------------------+----------------------------------------------------------------------------+
+| Training loop                                | `zero_grad()`, forward, loss, `backward()`, `step()`                       |
++----------------------------------------------+----------------------------------------------------------------------------+
 
 ## Part 0: Setup
 
@@ -56,7 +91,7 @@ set.seed(456)
 If `torch_is_installed()` does not return `TRUE`, you may need to run `torch::install_torch()` again and restart R.
 :::
 
-## Part 1: Anatomy of a neural network
+## Part 1: Anatomy of a Neural Network
 
 ### Layers of simple functions
 
@@ -79,17 +114,25 @@ where $\mathbf{x}$ is the input, each $\mathbf{W}^{(l)}$ and $\mathbf{b}^{(l)}$ 
 
 Without the activation function, the whole network would collapse into one big matrix multiplication, which is just a linear model, no matter how many layers you stacked. **Activation functions adds the non-linearity that lets the network approximate complicated functions.** There are three common activation functions:
 
-| Name | Formula | Notes |
-|------------------------|------------------------|------------------------|
-| Sigmoid | $g(z) = \dfrac{1}{1+e^{-z}}$ | ideal for binary classification, as it keeps output values between 0 and 1 |
-| Tanh | $g(z) = \dfrac{e^{z}-e^{-z}}{e^{z}+e^{-z}}$ | maps any real number to a number between -1 and 1 |
-| ReLU | $g(z) = \max(0, z)$ | the modern default for hidden layers |
++-------------+---------------------------------------------+----------------------------------------------------------------------------+
+| Name        | Formula                                     | Notes                                                                      |
++=============+=============================================+============================================================================+
+| Sigmoid     | $g(z) = \dfrac{1}{1+e^{-z}}$                | ideal for binary classification, as it keeps output values between 0 and 1 |
++-------------+---------------------------------------------+----------------------------------------------------------------------------+
+| Tanh        | $g(z) = \dfrac{e^{z}-e^{-z}}{e^{z}+e^{-z}}$ | maps any real number to a number between -1 and 1                          |
++-------------+---------------------------------------------+----------------------------------------------------------------------------+
+| ReLU        | $g(z) = \max(0, z)$                         | the modern default for hidden layers                                       |
+|             |                                             |                                                                            |
+|             |                                             | -   If a number is *positive*, keep it                                     |
+|             |                                             |                                                                            |
+|             |                                             | -   If *negative* or *zero*, change it to zero                             |
++-------------+---------------------------------------------+----------------------------------------------------------------------------+
 
-again, the formulas aren't important to remember, but it is nice to see!
+Again, the formulas aren't important to remember, but it is nice to see!
 
-### Task 1.1: Plot them (3 min)
+### Task 1.1: Plot them
 
-Run this, then **change something**: add `softplus` (`log(1 + exp(z))`), try a leaky ReLU, or zoom the x-axis. Which function has a flat region where the slope is nearly zero? (Hold that thought. It matters for training.)
+Run this! Which function has a flat region where the slope is nearly zero? (Hold that thought. It matters for training.)
 
 ```{r}
 #| label: activations
@@ -104,61 +147,63 @@ tibble(z = seq(-5, 5, by = 0.05)) |>
   theme_minimal()
 ```
 
-### The last layer decides the task
-
-What the final layer and the loss look like depends on what you are predicting:
+#### What the final layer look like depends on what you are predicting:
 
 -   **Regression:** linear output ($g(z)=z$) with **squared loss** $\|\mathbf{y}-\hat{\mathbf{y}}\|^2$.
--   **Classification into** $K$ classes: a **softmax** turns the $K$ raw scores (called *logits*) into probabilities that sum to 1, and the **cross-entropy loss** punishes the model for giving low probability to the true class:
+-   **Classification into** $K$ classes:
+    -   A **softmax** turns the $K$ raw scores (called *logits*) into probabilities that sum to 1
+    -   **Cross-entropy loss** punishes the model for giving low probability to the true class (classic statistics/logistic regression):
 
 $$
 \hat y_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}, \qquad
 \mathcal{L}(\hat{\mathbf{y}}, y) = -\log \hat y_{y}
 $$
 
-We will do 10-class classification (digits 0–9), so softmax plus cross-entropy it is.
+## Part 2: How a network learns
 
-## Part 2: How a network learns (8 min)
-
-### Training = minimizing a loss by walking downhill
-
-Training means finding the weights $\mathbf{W}$ that minimize the average loss over the training data:
+Training means finding the weights $\mathbf{W}$ and biases $\mathbf{b}$ that minimizes the loss between the real output and the desired output:
 
 $$
 J(\mathbf{W}) = \frac{1}{N}\sum_{n=1}^{N} \mathcal{L}\big(\hat{\mathbf{y}}^{(n)}, \mathbf{y}^{(n)}\big)
 $$
 
-The recipe is **gradient descent**:
+This can be done with **gradient descent**:
 
-1.  Initialize the weights randomly.
-2.  Compute the gradient $\partial J / \partial \mathbf{W}$ (which direction increases the loss).
-3.  Step the opposite way: $\mathbf{W} \leftarrow \mathbf{W} - \eta\, \partial J / \partial \mathbf{W}$, where $\eta$ is the **learning rate**.
-4.  Repeat.
+1.  Initializes the weights randomly.
+2.  Computing the gradient $\partial J / \partial \mathbf{W}$ determines which direction increases the loss (because calculus)
+3.  So we negate the gradient and it will go the opposite direction to decrease the loss: $\mathbf{W} \leftarrow \mathbf{W} - \eta\ \partial J / \partial \mathbf{W}$. n is the step size, also known as the learning rate. It informs how fast the function will converge to a minimum.
+4.  Then it repeats!
 
-Two practical wrinkles:
+Two limitations:
 
--   **The loss surface is highly non-convex** and real networks have millions of weights, so we never expect to find the global minimum. We just want a *good* one.
--   Computing the gradient over all $N$ examples is expensive, so we use **stochastic gradient descent (SGD)**: estimate the gradient from a random **mini-batch** of examples at each step. It is noisy but cheap, and it parallelizes beautifully on GPUs. Variants like **momentum** and **Adam** adapt the step size automatically.
+-   Real neural networks are super complex so finding the global minimum is often not possible, so we find the best we can.
+-   Computing the gradient for your total number of training examples will be expensive, so we can use **stochastic gradient descent (SGD)**. This estimates the gradient from a random **mini-batch** of examples at each step. Variants like **momentum** and **Adam** are optimization algorithms that can adapt the step size automatically.
 
 ### Backpropagation: reusing work
 
-A network can have millions of parameters, so we cannot compute each partial derivative from scratch. **Backpropagation** uses the chain rule to sweep from the output back toward the input, *reusing* the work from later layers. The cost of computing all the gradients is about the same as one forward pass. That efficiency is why the "matrix multiply, then element-wise activation" structure became the standard.
+A network can have millions of parameters, so we cannot compute each partial derivative from scratch. **Backpropagation** uses the chain rule (calculus again!!) to move from the output back toward the input, *reusing* the work from later layers. The cost of computing all the gradients is about the same as one forward pass. That efficiency is why the "matrix multiply, then activation" structure became the standard.
 
-### Task 2.1: Do one backward pass by hand (5 min)
+### *(Optional Task 2.1)*
+
+*You can try a backward pass by hand! If you know your linear algebra and calculus, go for it!*
 
 Here is a tiny regression network: 2 inputs, 2 hidden units with ReLU, 1 linear output, squared loss, and biases fixed at 0 to keep the arithmetic friendly.
 
--   Input $\mathbf{x} = (1, 2)$, target $y = 1$
+-   Input $\mathbf{x} = (1, 2)$, Output $y = 1$
 -   $\mathbf{W}^{(1)} = \begin{pmatrix} 0.5 & -0.5 \\ 0.25 & 0.75 \end{pmatrix}$, $\quad \mathbf{W}^{(2)} = \begin{pmatrix} 1 & 2 \end{pmatrix}$
 
-**On paper first (really!):**
+**On paper first:**
 
-a.  Compute the hidden pre-activations $\mathbf{z}^{(1)} = \mathbf{W}^{(1)}\mathbf{x}$, then apply ReLU to get $\mathbf{h}$.
-b.  Compute $\hat y = \mathbf{W}^{(2)}\mathbf{h}$ and the loss $(y-\hat y)^2$.
-c.  Work backward. The error signal at the output is $\delta^{(2)} = \partial \mathcal{L}/\partial \hat y = -2(y-\hat y)$. Then $\partial \mathcal{L}/\partial \mathbf{W}^{(2)} = \delta^{(2)}\,\mathbf{h}^\top$.
-d.  Push the signal back through $\mathbf{W}^{(2)}$ and through the ReLU's derivative ($1$ if $z>0$, else $0$) to get $\delta^{(1)}$, then $\partial \mathcal{L}/\partial \mathbf{W}^{(1)} = \delta^{(1)}\,\mathbf{x}^\top$.
+a.  Calculate the hidden layer values $\mathbf{z}^{(1)} = \mathbf{W}^{(1)}\mathbf{x}$, then apply ReLU (refer back to Part 1) to get your hidden layer value of $\mathbf{h}$.
+b.  Compute prediction $\hat y = \mathbf{W}^{(2)}\mathbf{h}$ and the loss $(y-\hat y)^2$.
+c.  Work backwards. Start at the output layer and calculate how the loss changes when the prediction changes. The loss signal at the output is $\delta^{(2)} = \partial \mathcal{L}/\partial \hat y = -2(y-\hat y)$ (This looks scary but it is just -2\*loss).
+d.  Now multiply your calculated output loss by the hidden layer value from `part a`, $\partial \mathcal{L}/\partial \mathbf{W}^{(2)} = \delta^{(2)}\,\mathbf{h}^\top$. We are figuring out how responsible the output layer was for the prediction layer.
+e.  Next figure out how much the weights and activation contributed to the loss. Multiply the output loss by the weight matrix to get the hidden layers' loss, $\delta^{(1)}$: $\delta^{(1)}=\mathbf{W}^{(2)\top}\delta^{(2)}$. Then apply the ReLU's derivative (send everything to $1$ if $z>0$, else $0$).
+f.  Then we figure out how much of the input layer contributed to the loss. Multiply the hidden layers' loss by the input values: $\partial \mathcal{L}/\partial \mathbf{W}^{(1)} = \delta^{(1)}\,\mathbf{x}^\top$.
 
-**Now let `torch` do it** with *automatic differentiation* (`autograd`), which is backpropagation done for you, and compare:
+### *NOT Optional Task 2.2:* **Now let's have `torch` do it**
+
+If you did it by hand, you can compare.
 
 ```{r}
 #| label: autograd
@@ -193,23 +238,25 @@ $$\partial\mathcal{L}/\partial\mathbf{W}^{(1)} = \begin{pmatrix} 0 & 0 \\ 10 & 2
 Notice the first hidden unit got **zero gradient**. It was "off" for this input, so its weights learn nothing from this example. Keep an eye out for this later: units that are off for *every* input are sometimes called dead units.
 :::
 
-**Make it yours:** change the input, weights, or target to your favorite numbers. Predict the gradients on paper, then check. Try making both hidden pre-activations negative. What happens to every gradient in $\mathbf{W}^{(1)}$?
-
 ::: {.callout-important title="Checkpoint"}
 You should be able to say, in your own words: *what does `loss$backward()` compute, and what would we do with those numbers next?* (Answer: the gradient of the loss with respect to every weight; we would subtract a small multiple of it from each weight.)
 :::
 
-## Part 3: Meet the data (5 min)
+## Part 3: The Data
 
-We will classify **MNIST**: 28 × 28 greyscale images of handwritten digits. The same code will work on two other datasets with a one-line change.
+We will classify **MNIST**: 28 × 28 greyscale images of handwritten numbers. The same code will work on two other datasets with just one line changed.
 
 ::: {.callout-note title="Pick your dataset (personalization #1)"}
-`mnist_dataset` is the classic handwritten digits. **`fashion_mnist_dataset`** has 10 types of clothing (shirts, sneakers, bags...). **`kmnist_dataset`** has 10 handwritten Japanese Hiragana characters. Pick whichever sounds most fun and swap the function name in the chunk below. Everything after this works unchanged.
+`mnist_dataset` is a classic image classification dataset with handwritten numbers.
+
+**`fashion_mnist_dataset`** has 10 types of clothing (shirts, sneakers, bags...).
+
+**`kmnist_dataset`** has 10 handwritten Japanese Hiragana characters. Pick whichever sounds most fun and swap the function name in the chunk below. Everything after this works unchanged.
 :::
 
 ```{r}
 #| label: load-data
-ds_fun <- mnist_dataset          # try fashion_mnist_dataset or kmnist_dataset
+ds_fun <- # TODO!          # try fashion_mnist_dataset, kmnist_dataset, or mnist_dataset
 
 train_ds <- ds_fun("data", train = TRUE,  download = TRUE)
 test_ds  <- ds_fun("data", train = FALSE, download = TRUE)
@@ -220,7 +267,7 @@ class_names <- train_ds$classes
 The raw data is a big array of pixel intensities (0–255). Before modeling we do three things:
 
 1.  Rescale to $[-1, 1]$. Networks train better when inputs are on a standard scale (this is *input standardization*).
-2.  **Flatten** each 28 × 28 image into a vector of 784 numbers, since a dense layer expects a vector.
+2.  **Flatten** each 28 × 28 image into a vector of 784 numbers, since a hidden layer expects a vector as the input.
 3.  Split into **training**, **validation**, and **test** sets (more on why in a moment).
 
 ```{r}
@@ -247,13 +294,15 @@ x_train$shape   # 50000 784
 
 ::: {.callout-warning title="R gotcha: labels start at 1"}
 R counts from 1, and so does `torch` for R. Class labels run **1–10**, not 0–9. For MNIST, the digit is `label - 1`. Rely on `class_names[label]` to translate.
+
+Example: `0` is "class one" and `1` is "class two"
 :::
 
-### 🛠 Task 3.1: Look at your data (3 min)
+### Task 3.1: Explore your data
 
 ```{r}
-#| label: show-digits
-digits_long <- function(x, y, idx) {
+#| label: show-data
+data_long <- function(x, y, idx) {
   map_dfr(idx, function(i) {
     tibble(id    = i,
            label = class_names[as_array(y[i])],
@@ -263,7 +312,7 @@ digits_long <- function(x, y, idx) {
   })
 }
 
-digits_long(x_train, y_train, sample(50000, 12)) |>
+data_long(x_train, y_train, sample(50000, 12)) |>
   mutate(panel = paste0("#", id, ": ", label)) |>
   ggplot(aes(col, row, fill = value)) +
   geom_raster() +
@@ -275,18 +324,18 @@ digits_long(x_train, y_train, sample(50000, 12)) |>
   theme(legend.position = "none")
 ```
 
-**Make it yours:** which class do *you* think will be hardest to tell apart from another? Write your guess down. We will check it at the end of Part 4.
+Which class do *you* think will be hardest to tell apart from another? Jot your guess down. We will check it at the end of Part 4.
 
-## Part 4: Baseline: multi-class logistic regression (8 min)
+## Part 4: Multi-class logistic regression baseline
 
-Before building anything fancy, always train a simple baseline. A multi-class logistic regression is just a **neural network with no hidden layer**: one linear layer producing 10 scores, then softmax.
+Before building anything fancy, always train a simple baseline. A multi-class logistic regression is just a **neural network with no hidden layer**: one linear layer producing 10 scores, then softmax. This may look different than what you're used to because we're using `torch`.
 
 ```{r}
 #| label: logreg-model
 logreg <- nn_sequential(nn_linear(784, 10))
 ```
 
-Because `nnf_cross_entropy()` applies the softmax internally, the model outputs raw **logits**, and we give them directly to the loss. (This is numerically safer than computing probabilities and then taking logs yourself.)
+Because `nnf_cross_entropy()` applies the softmax internally, the model outputs raw **logits**, and we give them directly to the loss (Mathematically, this is numerically safer than computing probabilities and then taking logs yourself).
 
 ### The training loop
 
@@ -345,7 +394,15 @@ opt$step()
 Why `zero_grad()` first? `torch` *accumulates* gradients into `$grad` each time you call `backward()`, so you must clear the old ones every iteration.
 :::
 
-Now train it. An **epoch** is one full pass through the training data.
+Now train it! An **epoch** is one full pass, forward and backwards, through the training data. Choosing the number of epochs is an optimization problem in itself but five is a good start for this activity.
+
+Once you run the code chunk below, you will see these following evaluation metrics:
+
+-   *train loss***:** Measures the error on the training dataset
+
+-   *val loss*: Measures the error on the validation dataset
+
+-   *val acc:* Measures how accurate the predictions are on the validation dataset
 
 ```{r}
 #| label: train-logreg
@@ -354,7 +411,7 @@ logreg <- nn_sequential(nn_linear(784, 10))
 hist_logreg <- train_model(logreg, x_train, y_train, x_val, y_val, epochs = 5)
 ```
 
-### 🛠 Task 4.1: What did the model learn? (4 min)
+### Task 4.1: What did the model learn?
 
 A logistic regression has one weight per pixel per class, so we can literally *look at* what each class is searching for:
 
@@ -395,9 +452,11 @@ tibble(truth = class_names[as_array(y_val)], pred = class_names[pred]) |>
 Write down your baseline's final validation accuracy. For MNIST it is typically around 92%. **That number is what the MLP has to beat.**
 :::
 
-## Part 5: Your first MLP (7 min)
+## Part 5: Your first MLP!! (YAY)
 
-Now add **hidden layers with ReLU activations**. We will use 784 → 128 → 64 → 10:
+Now add **hidden layers with ReLU activations**.
+
+We will use 784 → 128 → 64 → 10. Do not worry too much about this sequence of numbers. It represents how we are compressing an image and rebuilding it based off of their most important characteristics:
 
 ```{r}
 #| label: mlp-model
@@ -414,14 +473,14 @@ mlp   # print the architecture
 sum(map_dbl(mlp$parameters, \(p) p$numel()))
 ```
 
-That is 109,386 weights and biases, about 14 times more than the baseline. Because we wrote `train_model()` generically, training the MLP takes **zero new code**:
+That is 109,386 weights and biases, about 14 times more than the baseline. Because we wrote `train_model()` generically, training the MLP does not require **any new code**:
 
 ```{r}
 #| label: train-mlp
-hist_mlp <- train_model(mlp, x_train, y_train, x_val, y_val, epochs = 10)
+hist_mlp <- train_model(mlp, x_train, y_train, x_val, y_val, epochs = 5)
 ```
 
-### 🛠 Task 5.1: Compare (3 min)
+### Task 5.1: Compare
 
 Plot both models' validation loss and accuracy on the same axes:
 
@@ -436,14 +495,14 @@ bind_rows(logreg = hist_logreg, mlp = hist_mlp, .id = "model") |>
   theme_minimal()
 ```
 
-Discuss with your partner (or jot down your answers):
+Now let's think!
 
 -   How much better is the MLP? Where do the training and validation curves start to **separate**? That gap is **overfitting**: the model is memorizing the training set rather than learning something general.
--   The MLP has 14 times more parameters. Was that extra capacity worth it?
+-   The MLP has 14 times more parameters than the logistic regression. Was all that extra stuff worth it?
 
-## Part 6: Your experiment (10 min)
+## Optional Advanced Challenge! (encouraged)
 
-Now you are the researcher. Pick **one question** you are curious about, run **at least three variants**, and plot the results. Here is a reusable model builder, plus a menu of ideas.
+Now you are the researcher. Pick **one question** you are curious about, run **at least three variants**, and plot the results. Here is a reusable model builder, plus a few ideas.
 
 ```{r}
 #| label: make-mlp
@@ -462,17 +521,31 @@ make_mlp <- function(hidden = c(128, 64), dropout = 0, batch_norm = FALSE,
 ```
 
 ::: {.callout-note title="Pick your question (personalization #2)"}
-| If you're curious about... | Try varying... |
-|------------------------------------|------------------------------------|
-| **Size:** is bigger always better? | `hidden = c(16)`, `c(128, 64)`, `c(512, 256, 128)` |
-| **Learning rate:** how sensitive is training? | `lr = 1e-4, 1e-3, 1e-2, 1e-1` |
-| **Optimizers:** does Adam really help? | `optimizer = optim_sgd` vs. `optim_sgd, momentum = 0.9` vs. `optim_adam` |
-| **Regularization:** can we shrink the train/val gap? | `dropout = 0, 0.2, 0.5`, or L2 via `weight_decay = 0, 1e-4, 1e-3` |
-| **Data hunger:** how much data do we need? | train on only 500, 5,000, 50,000 images |
-| **Datasets:** which is harder, digits, clothes, or Hiragana? | swap `ds_fun` in Part 3 and rerun |
++--------------------------------------------------------------------+---------------------------------------------------------------------------------+
+| [If you're curious about...]{.underline}                           | [Try varying...]{.underline}                                                    |
++====================================================================+=================================================================================+
+| **Size:** is bigger always better?                                 | `hidden = c(16)`, `c(128, 64)`, `c(512, 256, 128)`                              |
++--------------------------------------------------------------------+---------------------------------------------------------------------------------+
+| **Learning rate:** how sensitive is training?                      | `lr = 1e-4, 1e-3, 1e-2, 1e-1`                                                   |
++--------------------------------------------------------------------+---------------------------------------------------------------------------------+
+| **Optimizers:** does Adam really help?                             | `optimizer = optim_sgd` vs. `optim_sgd, momentum = 0.9` vs. `optim_adam`        |
++--------------------------------------------------------------------+---------------------------------------------------------------------------------+
+| **Regularization:** can we avoid the train/val gap or overfitting? | `dropout = 0, 0.2, 0.5`, or ridge regression via `weight_decay = 0, 1e-4, 1e-3` |
++--------------------------------------------------------------------+---------------------------------------------------------------------------------+
+| **Data hunger:** how much data do we need?                         | train on only 500, 5,000, 50,000 images                                         |
++--------------------------------------------------------------------+---------------------------------------------------------------------------------+
+| **Datasets:** which is harder, digits, clothes, or Hiragana?       | swap `ds_fun` in Part 3 and rerun                                               |
++--------------------------------------------------------------------+---------------------------------------------------------------------------------+
 :::
 
-Here is a complete example sweeping the learning rate. Modify it to answer *your* question:
+::: {.callout-tip title="Helper definitions for your experiment"}
+-   **Dropout** randomly zeroes a fraction of activations *during training only*. `train_model()` already calls `model$train()` / `model$eval()` for you, so evaluation uses the full network automatically.
+-   **Weight decay** is ridge regression. Pass it through `...`: `train_model(model, ..., weight_decay = 1e-3)`.
+-   **Optimizer with momentum:** `train_model(model, ..., optimizer = optim_sgd, lr = 0.05, momentum = 0.9)`.
+-   **Less data:** `train_model(model, x_train[1:500, ], y_train[1:500], x_val, y_val)`. Watch the train/val gap explode.
+:::
+
+Here is a complete example changing the learning rate. Modify the code to answer *your* question:
 
 ```{r}
 #| label: experiment
@@ -489,16 +562,9 @@ ggplot(results, aes(epoch, val_acc, colour = setting)) +
   theme_minimal()
 ```
 
-::: {.callout-tip collapse="true" title="Hints for other experiments"}
--   **Dropout** randomly zeroes a fraction of activations *during training only*. `train_model()` already calls `model$train()` / `model$eval()` for you, so evaluation uses the full network automatically.
--   **Weight decay** is L2 regularization. Pass it through `...`: `train_model(model, ..., weight_decay = 1e-3)`.
--   **Optimizer with momentum:** `train_model(model, ..., optimizer = optim_sgd, lr = 0.05, momentum = 0.9)`.
--   **Less data:** `train_model(model, x_train[1:500, ], y_train[1:500], x_val, y_val)`. Watch the train/val gap explode.
-:::
+### Almost there!
 
-### 🏁 Finish line
-
-You have been choosing models by looking at the **validation** set. That is exactly what it is for. But after all that tuning, your validation score is slightly optimistic, because *you* picked the winner using it. The **test set** is the one you have not touched, and you get to use it **once**, at the very end:
+Up until now, you have been choosing models by looking at the **validation** set. That is exactly what it is for. But after all that tuning, your validation score is slightly optimistic, because *you* picked the winner using it. The **test set** is the one you have not touched, and you get to use it **once**, at the very end:
 
 ```{r}
 #| label: finish-line
@@ -509,174 +575,56 @@ train_model(best_model, x_train, y_train, x_val, y_val, epochs = 10)
 evaluate(best_model, x_test, y_test)
 ```
 
-**You are done with the basic guide when you can fill in this sentence:**
+**You are done with the challenge! You can fill in this sentence:**
 
 > *"On \[dataset\], my best model was \_\_\_\_\_\_ (settings), which reached \_\_\_\_% validation accuracy and \_\_\_\_% test accuracy. Compared with the logistic regression baseline, the biggest lesson from my experiment was \_\_\_\_\_\_."*
 
 ::: {.callout-important title="Why not just tune on the test set?"}
-If you repeatedly peek at the test set, your choices start to fit *its* quirks, and the reported accuracy no longer tells you how the model will do on genuinely new data. Training set: fit the weights. Validation set: choose hyperparameters. Test set: report the final honest number.
+If you repeatedly peek at the test set, your choices start to fit *its* quirks, and the reported accuracy no longer tells you how the model will do on genuinely new data.
+
+Training set: fit the weights.
+
+Validation set: choose hyperparameters.
+
+Test set: report the final honest number.
 :::
 
-## Part 7: Optional advanced challenges
+## Part 6: Next steps & where you can go from here!
 
-Finished early, or just curious? Pick any of these. They are independent of each other.
+You built a **dense** network: every unit in one layer connects to every unit in the next. It treats the 784 pixels as an unordered bag of numbers. Different types of data will pair the best with different neural networks such as the following:
 
-### Challenge A: Early stopping
++-------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------------+
+| Type of Data                              | Type of Neural Network                  | Key idea                                                                            |
++===========================================+=========================================+=====================================================================================+
+| Images                                    | Convolutional networks (CNNs)           | reuse the same small filters across the whole image, exploiting spatial correlation |
++-------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------------+
+| Text, audio, time series                  | Recurrent networks and **transformers** | handle sequences of variable length                                                 |
++-------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------------+
+| Large-scale language and image generation | Large transformer models                | the same training ideas (loss, gradients, backprop) at enormous scale               |
++-------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------------+
 
-Rather than guessing the number of epochs, stop when validation loss stops improving ("with some look-ahead," called *patience*) and restore the best weights. Modify `train_model()` to take `epochs = 50, patience = 3`.
-
-::: {.callout-tip collapse="true" title="Sketch of one solution"}
-Before the epoch loop add `best_val <- Inf; wait <- 0`. After computing `va`:
-
-``` r
-if (va$loss < best_val) {
-  best_val   <- va$loss
-  wait       <- 0
-  best_state <- lapply(model$state_dict(), \(t) t$clone())
-} else {
-  wait <- wait + 1
-  if (wait >= patience) break
-}
-```
-
-and after the loop, `model$load_state_dict(best_state)`.
-:::
-
-### Challenge B: Hunt for dead units
-
-Do all 128 first-layer units pull their weight? Look at the first hidden layer's activations on the validation set. A unit whose activation barely varies across images contributes almost nothing.
-
-```{r}
-#| label: dead-units
-h1 <- mlp[[2]](mlp[[1]](x_val))             # ReLU(first linear layer)
-unit_var <- as_array(h1$var(dim = 1))       # variance across images, per unit
-
-tibble(unit = seq_along(unit_var), variance = unit_var) |>
-  ggplot(aes(unit, variance)) + geom_col() + theme_minimal()
-
-sum(unit_var <= 0.1)   # how many units look inactive?
-```
-
-Now rebuild the network with a much smaller first layer (e.g., 75 units) and compare the number of inactive units in layer 1 versus layer 2. Then use `backward()` on one mini-batch and compare histograms of `model[[1]]$weight$grad` against the final layer's gradient. You should find that gradients are typically larger near the output, which is one reason the early layers can be slower to train.
-
-### Challenge C: Which pixels mattered? (feature explainability)
-
-A *saliency map* asks: "if I nudged each input pixel slightly, how much would the model's top score change?" That is just the gradient of the winning logit with respect to the **input**, and `autograd` hands it to you for free:
-
-```{r}
-#| label: saliency
-i <- 7
-x <- x_test[i, , drop = FALSE]$clone()$requires_grad_(TRUE)
-
-out <- mlp(x)
-cls <- as_array(out$argmax(dim = 2))
-out[1, cls]$backward()
-
-sal <- abs(as_array(x$grad[1, ]))
-
-tibble(row = rep(1:28, each = 28), col = rep(1:28, times = 28), saliency = sal) |>
-  ggplot(aes(col, row, fill = saliency)) +
-  geom_raster() + scale_y_reverse() + coord_equal() +
-  scale_fill_viridis_c() + theme_void() +
-  labs(title = paste("Model says:", class_names[cls],
-                     "| truth:", class_names[as_array(y_test[i])]))
-```
-
-Try it on an image the model gets *wrong*. Does the saliency map suggest why?
-
-### Challenge D: Save and reload a model
-
-Training is expensive, so you rarely want to repeat it. Save the learned parameters (the `state_dict`), then load them into a fresh network:
-
-```{r}
-#| label: save-load
-torch_save(mlp$state_dict(), "mlp_checkpoint.pt")
-
-fresh <- make_mlp()
-fresh$load_state_dict(torch_load("mlp_checkpoint.pt"))
-evaluate(fresh, x_val, y_val)
-```
-
-Now try loading the same checkpoint into `make_mlp(hidden = c(256, 128))`. What happens, and why does it make sense?
-
-### Challenge E: The tidymodels route
-
-You just wrote everything by hand to see how it works. For quick tabular problems in R, you can fit small networks through the tidymodels `mlp()` specification (for example with the `nnet` or `brulee` engines). Pick a dataset you have used in this class, fit an `mlp()`, and compare it with a random forest or linear model. See the `parsnip` documentation for the current engine options.
-
-## Where to go from here
-
-You built a **dense** network: every unit in one layer connects to every unit in the next. It treats the 784 pixels as an unordered bag of numbers. Different data has structure worth exploiting, which is why other architectures exist:
-
-| Data | Architecture family | Key idea |
-|------------------------|------------------------|------------------------|
-| Images | Convolutional networks (CNNs) | reuse the same small filters across the whole image, exploiting spatial correlation |
-| Text, audio, time series | Recurrent networks and **transformers** | handle sequences of variable length |
-| Large-scale language and image generation | Large transformer models | the same training ideas (loss, gradients, backprop) at enormous scale |
-
-The ingredients you practiced today (a loss function, gradient descent, backpropagation, train/validation/test splits, regularization) carry over to all of them. In particular, scale in data and compute matters a great deal: AlexNet's 2012 ImageNet win used a CNN with about 60 million parameters, trained on GPUs.
+The skills you have practiced today (a loss function, gradient descent, backpropagation, train/validation/test splits, regularization) will carry over to all of them.
 
 **R toolbox for next steps:**
 
 -   [`torch`](https://torch.mlverse.org/): what you used today; supports CNNs, transformers, custom training loops.
--   [`keras3`](https://keras3.posit.co/): a higher-level interface that is quick for standard architectures.
 -   [`tidymodels`](https://www.tidymodels.org/): `mlp()` for small networks inside the workflow you already know.
 -   Free book: *Deep Learning and Scientific Computing with R torch* (Sigrid Keydana).
 
-## Cheat sheet
+## References & Resoures
 
-| Idea | One-liner |
-|------------------------------------|------------------------------------|
-| Layer | linear map + bias, then a non-linear activation |
-| Activation | the thing that makes depth useful (ReLU is the usual hidden-layer default) |
-| Softmax + cross-entropy | turn scores into probabilities; punish low probability on the true class |
-| Gradient descent | $\mathbf{W} \leftarrow \mathbf{W} - \eta\,\partial J/\partial \mathbf{W}$ |
-| SGD / mini-batch | estimate the gradient on a small random batch |
-| Backprop (`$backward()`) | chain rule, output → input, reusing work |
-| Epoch | one full pass over the training data |
-| Overfitting | train performance keeps improving, validation performance does not |
-| Early stopping, L2 (`weight_decay`), dropout | three ways to rein in overfitting |
-| Train / validation / test | fit weights / choose settings / report the final number once |
-| Training loop | `zero_grad()`, forward, loss, `backward()`, `step()` |
-
-## Credits and further reading
-
-This guide synthesizes and adapts material from a neural networks course taught at Universidad Carlos III de Madrid:
+This guide synthesizes and adapts material from a neural networks course that Karyna took at Universidad Carlos III de Madrid:
 
 -   Lecture slides *Deep learning with Neural Networks* by Alejandro Lancho Serrano and Pablo Martínez Olmos, which themselves draw on MIT 6.S191: Introduction to Deep Learning (introtodeeplearning.com), *Deep Learning* by Goodfellow et al. (2017), and figures by Sebastian Raschka (sebastianraschka.com).
 -   Lab *Image classification with MLPs* by Pablo M. Olmos (Python/PyTorch), itself a wrap-up of Facebook's Deep Learning course on Udacity. The structure of Parts 3–5 follows that lab, translated to R.
--   Krizhevsky, Sutskever & Hinton (2012), *ImageNet Classification with Deep Convolutional Neural Networks*.
 -   `torch` for R: <https://torch.mlverse.org/>
 
 ------------------------------------------------------------------------
 
-# Test-drive notes {.unnumbered}
+# Reflection {.unnumbered}
 
-<!-- TODO (team): After each test session, paste the tester's session notes here. Keep each person's notes separate, as the assignment asks. -->
+Let us know how we did creating this activity! Reflect on your experience using some of the guiding questions below:
 
-## Session 1 {.unnumbered}
-
--   **Team member running the session:**
--   **Tester (name / background):**
--   **Date and total time taken:**
--   **Where they got stuck or confused (with timestamps / task numbers):**
--   **Where we had to step in:**
--   **Answer to: "How well did you learn what we said you would learn?"**
--   **Answer to: "Was anything confusing?"**
--   **Answer to: "Is there anything you wish you had learned?"**
-
-## Session 2 {.unnumbered}
-
-*(same template)*
-
-## Session 3 {.unnumbered}
-
-*(same template)*
-
-# How we improved the guide {.unnumbered}
-
-<!-- TODO (team): After comparing notes, describe each change and the feedback that motivated it. -->
-
-| Feedback we received | Change we made |
-|----------------------|----------------|
-|                      |                |
-|                      |                |
+-   **Where did you get stuck or confused and why? What did you do to overcome it?**
+-   **How well did you learn the activity's learning objectives?**
+-   **Is there anything you wish you had learned?**

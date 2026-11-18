@@ -37,7 +37,7 @@ We will use the [`torch`](https://torch.mlverse.org/) package, which gives R use
 #| label: install
 # Run once and then comment out. You probably already have tidyverse and ggplot installed, so delete those if you'd like!
 install.packages(c("torch", "torchvision", "tidyverse", "ggplot2"))
-#torch::install_torch() #if prompted, you may need to run this
+torch::install_torch() #if prompted, you may need to run this
 ```
 
 ```{r}
@@ -58,18 +58,12 @@ If `torch_is_installed()` does not return `TRUE`, you may need to run `torch::in
 
 ## Part 1: Anatomy of a neural network
 
-![](images/clipboard-904855820.png)
-
-## Layers
-
-A neural network is composed of an input layer, a hidden layer, and an output. The hidden layer
-
 ### Layers of simple functions
 
-A dense neural network is a **composition of simple mathematical functions**. Each layer does two things:
+A neural network is composed of an input, a hidden layer, and an output. The hidden layer is composed of a collection of simple functions. Each layer in the hidden section will do two things:
 
-1.  A **linear step**: multiply the inputs by a weight matrix and add a bias.
-2.  A **non-linear step**: apply an *activation function* to each number, one at a time.
+1.  A **linear step**: The linear step acts like a simple linear function y = Wx + b. W is the weight matrix, a collection of numbers used to scale transform or evaluate data (our input) across different fields. B is bias, similar to the y intercept of a standard linear equation. It is added to the weighted sum of inputs before passing through the next non-linear step.
+2.  A **non-linear step**: An *activation function* is applied to each output of the linear function, one at a time. The activation function decides how strong each node in a layer should fire, or pass a signal to the next layer.
 
 For a network with two layers, the prediction is
 
@@ -77,17 +71,21 @@ $$
 \hat{\mathbf{y}} = g^{(2)}\!\Big(\mathbf{W}^{(2)}\, g^{(1)}\!\big(\mathbf{W}^{(1)}\mathbf{x} + \mathbf{b}^{(1)}\big) + \mathbf{b}^{(2)}\Big)
 $$
 
-where $\mathbf{x}$ is the input, each $\mathbf{W}^{(l)}$ and $\mathbf{b}^{(l)}$ are the **weights and biases** the network will learn, and $g^{(l)}$ is the activation function. "Deep" learning just means more of these layers stacked up. In the image-recognition setting, early layers tend to pick up simple patterns (like edges) and later layers combine them into more abstract ones (like parts of objects).
+where $\mathbf{x}$ is the input, each $\mathbf{W}^{(l)}$ and $\mathbf{b}^{(l)}$ are the **weights and biases** the network will learn, and $g^{(l)}$ is the activation function. "Deep" learning just means more of these layers stacked up. In the image-recognition setting, early layers tend to pick up simple patterns (like edges) and later layers combine them into more abstract ones (like parts of objects). The math here isn't super important, but it's actually just stuff you already know!
+
+![](images/clipboard-904855820.png)
 
 ### Why we need activation functions
 
-If every $g$ were just "multiply by 1," the whole network would collapse into one big matrix multiplication, which is just a linear model, no matter how many layers you stacked. **Activation functions inject the non-linearity that lets the network approximate complicated functions.** Three classics:
+Without the activation function, the whole network would collapse into one big matrix multiplication, which is just a linear model, no matter how many layers you stacked. **Activation functions adds the non-linearity that lets the network approximate complicated functions.** There are three common activation functions:
 
 | Name | Formula | Notes |
 |------------------------|------------------------|------------------------|
-| Sigmoid | $g(z) = \dfrac{1}{1+e^{-z}}$ | squashes to (0, 1) |
-| Tanh | $g(z) = \dfrac{e^{z}-e^{-z}}{e^{z}+e^{-z}}$ | squashes to (−1, 1) |
+| Sigmoid | $g(z) = \dfrac{1}{1+e^{-z}}$ | ideal for binary classification, as it keeps output values between 0 and 1 |
+| Tanh | $g(z) = \dfrac{e^{z}-e^{-z}}{e^{z}+e^{-z}}$ | maps any real number to a number between -1 and 1 |
 | ReLU | $g(z) = \max(0, z)$ | the modern default for hidden layers |
+
+again, the formulas aren't important to remember, but it is nice to see!
 
 ### Task 1.1: Plot them (3 min)
 

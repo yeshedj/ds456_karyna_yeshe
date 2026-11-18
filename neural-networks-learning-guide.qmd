@@ -58,11 +58,15 @@ If `torch_is_installed()` does not return `TRUE`, you may need to run `torch::in
 
 ## Part 1: Anatomy of a neural network
 
+## Layers
+
+A neural network is composed of an input layer, a hidden layer, and an output. The hidden layer
+
 ### Layers of simple functions
 
 A dense neural network is a **composition of simple mathematical functions**. Each layer does two things:
 
-1.  A **linear step**: multiply the inputs by a weight matrix and add a bias.
+1.  A **linear step**: multiply the inputs by a weight matrix and add a bias. 
 2.  A **non-linear step**: apply an *activation function* to each number, one at a time.
 
 For a network with two layers, the prediction is
